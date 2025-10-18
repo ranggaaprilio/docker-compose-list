@@ -1,0 +1,57 @@
+# Definisi Layanan (Containers)
+services:
+  # ----------------------------------------
+  # 1. LAYANAN JENKINS
+  # ----------------------------------------
+  jenkins:
+    container_name: jenkins
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    environment:
+      - JENKINS_OPTS="--httpPort=8080"
+      - JAVA_OPTS="-Dhudson.model.DirectoryBrowserSupport.CSP="
+      - JENKINS_URL="http://jenkins.aprilio.dev/"
+    user: root # Penting untuk akses Docker Socket Host
+    restart: unless-stopped
+    privileged: true # Memberikan hak akses yang diperlukan
+    ports:
+      - "8080:8080" # Akses UI dari luar
+      - "50000:50000" # Untuk Jenkins Agents
+    volumes:
+      - ./jenkins_data:/var/jenkins_home # Pastikan jalur ini benar di VPS Anda
+      - /var/run/docker.sock:/var/run/docker.sock # Mounting Docker Socket untuk Deployment
+        # Docker binary (adjust path based on your system)
+      - /usr/bin/docker:/usr/bin/docker
+        # Docker Compose plugin
+      - /usr/libexec/docker/cli-plugins/docker-compose:/usr/libexec/docker/cli-plugins/docker-compose
+    networks:
+      - ci_network # Menghubungkan ke jaringan kustom
+
+  # ----------------------------------------
+  # 2. LAYANAN NGINX (Reverse Proxy)
+  # ----------------------------------------
+  nginx:
+    container_name: my-nginx
+    image: nginx:latest
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80" # Akses Nginx dari luar di Port 80
+    volumes:
+      # Pastikan membuat file nginx.conf di ~/nginx/
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Pastikan membuat file default.conf di ~/nginx/conf.d/
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro 
+      # Volume untuk file statis (aplikasi utama)
+      - ./nginx/html:/usr/share/nginx/html
+      # Volume untuk logs nginx
+      - ./nginx/logs:/var/log/nginx 
+    networks:
+      - ci_network # Menghubungkan ke jaringan kustom
+
+# Definisi Jaringan
+networks:
+  ci_network:
+    driver: bridge # Jenis jaringan antar-kontainer

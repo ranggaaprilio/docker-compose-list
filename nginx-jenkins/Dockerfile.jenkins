@@ -1,0 +1,19 @@
+FROM jenkins/jenkins:jdk21
+
+# Switch to root user to install packages
+USER root
+
+# Install Node.js and npm
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Verify installation
+RUN node --version && npm --version
+
+# Switch back to jenkins user
+USER jenkins
