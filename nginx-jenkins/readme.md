@@ -113,6 +113,12 @@ networks:
     name: shared_network
 ```
 
+OR you can run
+
+```
+docker network connect <nama-jaringan-anda> <nama-container-yang-sudah-berjalan>
+```
+
 #### Option 3: Host Network Access
 Jenkins can access applications running on the host using:
 - `host.docker.internal` (already configured in nginx)
